@@ -9,14 +9,22 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: 
-                linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)),
+                linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+                repeating-linear-gradient(
+                    90deg,
+                    #3E2723 0px,
+                    #4E342E 3px,
+                    #3E2723 6px,
+                    #5D4037 9px,
+                    #3E2723 12px
+                ),
                 repeating-linear-gradient(
                     0deg,
-                    #8B4513 0px,
-                    #A0522D 2px,
-                    #8B4513 4px
+                    transparent 0px,
+                    rgba(0,0,0,0.1) 100px,
+                    transparent 200px
                 ),
-                linear-gradient(180deg, #2C1810 0%, #4A2C1A 50%, #2C1810 100%);
+                linear-gradient(180deg, #3E2723 0%, #4E342E 30%, #5D4037 50%, #4E342E 70%, #3E2723 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -50,7 +58,14 @@
             background: 
                 radial-gradient(circle at 20% 30%, rgba(255,215,0,0.03) 0%, transparent 30%),
                 radial-gradient(circle at 80% 60%, rgba(255,215,0,0.03) 0%, transparent 30%),
-                radial-gradient(circle at 50% 50%, rgba(0,0,0,0.2) 0%, transparent 50%);
+                radial-gradient(circle at 50% 50%, rgba(0,0,0,0.2) 0%, transparent 50%),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,0,0,0.03) 2px,
+                    rgba(0,0,0,0.03) 4px
+                );
             pointer-events: none;
         }
         .header {
@@ -279,10 +294,6 @@
         <div class="controls">
             <select id="categorySelect">
                 <option value="objects">Everyday Objects</option>
-                <option value="animals">Animals</option>
-                <option value="fantasy">Fantasy Creatures</option>
-                <option value="emotions">Emotions & Concepts</option>
-                <option value="places">Places & Scenes</option>
             </select>
             <button id="spinBtn" onclick="spin()">🎰 Spin for Player 1</button>
             <button id="resetBtn" onclick="window.location.reload()">🔄 Reset Game</button>
@@ -312,17 +323,14 @@
             <p>1️⃣ Each player spins for their painting prompt<br>
             2️⃣ Start the 30-minute timer and paint your subject<br>
             3️⃣ When time's up, SWITCH canvases!<br>
-            4️⃣ Finish each other's paintings without revealing what it is</p>
+            4️⃣ Finish each other's paintings without revealing what it is<br>
+            5️⃣ Paint for another 30 minutes after swapping</p>
         </div>
     </div>
 
     <script>
         const prompts = {
-            objects: ['Coffee Mug', 'Vintage Camera', 'Umbrella', 'Old Book', 'Bicycle', 'Sunglasses', 'Clock', 'Telescope', 'Guitar', 'Teapot', 'Lighthouse', 'Hourglass'],
-            animals: ['Elephant', 'Peacock', 'Octopus', 'Fox', 'Owl', 'Dolphin', 'Butterfly', 'Tiger', 'Penguin', 'Giraffe', 'Flamingo', 'Seahorse'],
-            fantasy: ['Dragon', 'Phoenix', 'Mermaid', 'Unicorn', 'Griffin', 'Fairy', 'Centaur', 'Pegasus', 'Yeti', 'Sphinx', 'Kraken', 'Basilisk'],
-            emotions: ['Joy', 'Serenity', 'Chaos', 'Nostalgia', 'Wonder', 'Melancholy', 'Courage', 'Mystery', 'Freedom', 'Hope', 'Solitude', 'Harmony'],
-            places: ['Moonlit Beach', 'Mountain Peak', 'City Skyline', 'Forest Path', 'Desert Oasis', 'Underwater Cave', 'Space Station', 'Garden Maze', 'Ancient Ruins', 'Foggy Harbor', 'Volcano', 'Northern Lights']
+            objects: ['shrek', 'lighthouse in a desert', 'crab man', '67 vs 89', 'tropical beach', 'solar system', 'any fruit', 'a person on a mountain', 'sasquatch',  'snail carrying a city on its shell', 'anything held up by balloon', 'desolate subway station', 'your favorite batman'],
         };
 
         const canvas = document.getElementById('bingoCanvas');
@@ -345,8 +353,8 @@
         const CAGE_CENTER_X = 300;
         const CAGE_CENTER_Y = 200;
         const CAGE_RADIUS = 140;
-        const SPIN_FORCE = 0.8;
-        const SPIN_SPEED = 0.025;
+        const SPIN_FORCE = 0.5;
+        const SPIN_SPEED = 0.005;
 
         class Ball {
             constructor(x, y, color, label) {
@@ -382,7 +390,7 @@
                     this.vy += Math.cos(targetAngle) * 4;
                 } else {
                     // Normal gravity when not spinning
-                    this.vy += GRAVITY;
+                    this.vy += GRAVITY * 0.75; // Increased gravity to ensure balls fall
                 }
 
                 this.vx *= FRICTION;
@@ -397,8 +405,8 @@
                         Math.pow(this.x - CAGE_CENTER_X, 2) + 
                         Math.pow(this.y - CAGE_CENTER_Y, 2)
                     );
-                    // Check if ball is at the bottom center (hole position)
-                    if (distToCenter < this.radius + 5 && this.y >= CAGE_CENTER_Y - 10) {
+                    // Expanded detection area for the hole
+                    if (distToCenter < 25 && this.y >= CAGE_CENTER_Y - 10) {
                         selectedBall = this;
                         return; // Stop updating this ball
                     }
@@ -544,6 +552,45 @@
             ctx.lineWidth = 2;
             ctx.strokeRect(150, 420, 300, 30);
 
+            // Support arm from base to cage (left side)
+            const armGradient = ctx.createLinearGradient(200, 340, 240, 340);
+            armGradient.addColorStop(0, '#555');
+            armGradient.addColorStop(0.5, '#666');
+            armGradient.addColorStop(1, '#444');
+            ctx.fillStyle = armGradient;
+            ctx.fillRect(200, 340, 15, 80);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(200, 340, 15, 80);
+
+            // Support arm from base to cage (right side)
+            ctx.fillStyle = armGradient;
+            ctx.fillRect(385, 340, 15, 80);
+            ctx.strokeStyle = '#333';
+            ctx.strokeRect(385, 340, 15, 80);
+
+            // Horizontal support bar connecting to cage bottom
+            const horizontalArmGradient = ctx.createLinearGradient(0, 340, 0, 360);
+            horizontalArmGradient.addColorStop(0, '#666');
+            horizontalArmGradient.addColorStop(0.5, '#777');
+            horizontalArmGradient.addColorStop(1, '#555');
+            ctx.fillStyle = horizontalArmGradient;
+            ctx.fillRect(215, 340, 170, 12);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(215, 340, 170, 12);
+
+            // Bolts on arms for detail
+            ctx.fillStyle = '#888';
+            [205, 390].forEach(x => {
+                ctx.beginPath();
+                ctx.arc(x + 5, 350, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + 5, 410, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
             // Cage background
             const cageGradient = ctx.createRadialGradient(CAGE_CENTER_X - 40, CAGE_CENTER_Y - 40, 20, CAGE_CENTER_X, CAGE_CENTER_Y, CAGE_RADIUS);
             cageGradient.addColorStop(0, 'rgba(255,255,255,0.3)');
@@ -658,14 +705,35 @@
                 
                 // Give balls a final push as they release
                 balls.forEach(ball => {
-                    ball.vx *= 0.5;
-                    ball.vy *= 0.5;
+                    ball.vx *= 0.3;
+                    ball.vy *= 0.3;
                 });
+                
+                // Failsafe: If no ball is selected after 2.5 seconds, force select a random ball
+                const failsafeTimeout = setTimeout(() => {
+                    if (!selectedBall) {
+                        // Find ball closest to center
+                        let closestBall = balls[0];
+                        let minDist = Infinity;
+                        balls.forEach(ball => {
+                            const dist = Math.sqrt(
+                                Math.pow(ball.x - CAGE_CENTER_X, 2) + 
+                                Math.pow(ball.y - CAGE_CENTER_Y, 2)
+                            );
+                            if (dist < minDist) {
+                                minDist = dist;
+                                closestBall = ball;
+                            }
+                        });
+                        selectedBall = closestBall;
+                    }
+                }, 2500);
                 
                 // Wait for a ball to fall through, then show result
                 const checkBallInterval = setInterval(() => {
                     if (selectedBall) {
                         clearInterval(checkBallInterval);
+                        clearTimeout(failsafeTimeout);
                         
                         // Map ball label to prompt
                         const ballIndex = parseInt(selectedBall.label) - 1;
