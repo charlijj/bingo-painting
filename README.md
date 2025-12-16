@@ -1,2 +1,2 @@
 # bingo-painting
-Random bingo 2 person painting game. 
+https://charlijj.github.io/bingo-painting/
